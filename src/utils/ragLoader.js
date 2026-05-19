@@ -1,4 +1,4 @@
-import csvText from '../data/AI유선지원센터 - 입력양식.csv?raw'
+import csvText from '../data/support-form.csv?raw'
 
 function parseRow(line) {
   const fields = []
