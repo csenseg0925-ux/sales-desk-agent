@@ -423,10 +423,10 @@ function HomePage({ user, onNav, onLogout }) {
       tags: ["상품매뉴얼", "업무매뉴얼", "구비서류", "세일즈콘텐츠", "공지사항", "FAQ"],
     },
     {
-      id: "calc", icon: "🧮", title: "유선 간편 요금계산기",
-      desc: "인터넷·TV·전화·결합 조건 선택 시 항목별 할인 내역과 총 금액 즉시 계산",
+      id: "calc", icon: "📊", title: "유통망 손익 시뮬레이터",
+      desc: "대리점/판매점 손익 구조를 분석하고 시뮬레이션하는 도구",
       color: C.teal, light: C.tealLight,
-      tags: ["인터넷", "IPTV", "인터넷전화", "결합 할인"],
+      tags: ["매출 분석", "손익 계산", "수수료", "목표 설정"],
     },
   ];
 
@@ -832,9 +832,7 @@ export default function App() {
       {page === "calc" && user && (
         <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Noto Sans KR', sans-serif" }}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>🧮</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#1A1F36", marginBottom: 8 }}>유선 간편 요금계산기</div>
-            <div style={{ fontSize: 13, color: "#6B7492", marginBottom: 20 }}>기존 요금계산기 화면이 여기에 연결됩니다</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#1A1F36", marginBottom: 20 }}>현재 해당 기능은 구현 중에 있습니다.</div>
             <button onClick={() => setPage("home")} style={{
               background: C.teal, border: "none", borderRadius: 10, padding: "10px 20px",
               fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: "inherit",
