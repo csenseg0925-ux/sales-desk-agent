@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useApiKey } from '../App'
-import { ApiKeyButton } from './ApiKeyModal'
+import ANTHROPIC_API_KEY from '../config'
 import { getContextChunks } from '../utils/ragLoader'
 
 const CATEGORIES = ['상품매뉴얼', '업무매뉴얼', '구비서류', '공지사항', '세일즈콘텐츠', 'FAQ']
@@ -24,7 +23,7 @@ const PLACEHOLDER = {
   'FAQ': '고객 응대 관련 질문을 해보세요.',
 }
 
-async function callClaudeApi(apiKey, category, message, history) {
+async function callClaudeApi(category, message, history) {
   const contextChunks = getContextChunks(message)
 
   const contextSection = contextChunks
@@ -50,7 +49,7 @@ async function callClaudeApi(apiKey, category, message, history) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
+      'x-api-key': ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
@@ -121,17 +120,6 @@ const s = {
     transition: 'all 0.15s ease',
     flexShrink: 0,
   }),
-  noKeyBanner: {
-    background: '#FEF2F2',
-    borderBottom: '1px solid #FECACA',
-    padding: '10px 20px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    fontSize: '13px',
-    color: '#991B1B',
-    flexShrink: 0,
-  },
   chatArea: {
     flex: 1,
     overflowY: 'auto',
@@ -243,7 +231,6 @@ function formatTime() {
 
 export default function AISupport() {
   const navigate = useNavigate()
-  const { apiKey } = useApiKey()
   const [activeCategory, setActiveCategory] = useState('상품매뉴얼')
   const [histories, setHistories] = useState({})
   const [input, setInput] = useState('')
@@ -252,7 +239,7 @@ export default function AISupport() {
   const inputRef = useRef(null)
 
   const messages = histories[activeCategory] || []
-  const canSend = !!apiKey && !!input.trim() && !loading
+  const canSend = !!input.trim() && !loading
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -276,7 +263,7 @@ export default function AISupport() {
     setLoading(true)
 
     try {
-      const replyText = await callClaudeApi(apiKey, activeCategory, text, prevMessages)
+      const replyText = await callClaudeApi(activeCategory, text, prevMessages)
       const aiMsg = { role: 'assistant', content: replyText, time: formatTime() }
       setHistories((h) => ({ ...h, [activeCategory]: [...updatedMessages, aiMsg] }))
     } catch (err) {
@@ -317,9 +304,6 @@ export default function AISupport() {
       <header style={s.header}>
         <button style={s.backBtn} onClick={() => navigate('/')}>← 홈</button>
         <span style={s.headerTitle}>AI 지원센터</span>
-        <div style={{ marginLeft: 'auto' }}>
-          <ApiKeyButton light />
-        </div>
       </header>
 
       <div style={s.tabBar}>
@@ -334,13 +318,6 @@ export default function AISupport() {
           </button>
         ))}
       </div>
-
-      {!apiKey && (
-        <div style={s.noKeyBanner}>
-          <span>⚠️</span>
-          <span>API 키가 설정되지 않았습니다. 우측 상단의 <strong>'API 키 필요'</strong> 버튼을 눌러 설정해주세요.</span>
-        </div>
-      )}
 
       <div style={s.chatArea}>
         {messages.length === 0 ? (
@@ -387,12 +364,11 @@ export default function AISupport() {
         <textarea
           ref={inputRef}
           className="chat-input"
-          style={{ ...s.input, background: apiKey ? '#F9FAFB' : '#F3F4F6' }}
-          placeholder={apiKey ? PLACEHOLDER[activeCategory] : 'API 키를 먼저 설정해주세요.'}
+          style={s.input}
+          placeholder={PLACEHOLDER[activeCategory]}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={!apiKey}
           rows={1}
           onInput={(e) => {
             e.target.style.height = 'auto'
