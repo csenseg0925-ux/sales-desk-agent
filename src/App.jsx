@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import ANTHROPIC_API_KEY from './config';
 
 // ── 색상 시스템 ────────────────────────────────────────
 const C = {
@@ -676,6 +677,8 @@ function AICenterPage({ user, onBack }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
           "anthropic-dangerous-direct-browser-access": "true",
         },
         body: JSON.stringify({
