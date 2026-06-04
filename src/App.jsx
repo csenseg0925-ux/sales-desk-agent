@@ -415,25 +415,53 @@ function HistoryPage({ user, onBack }) {
 
 // ── 홈 화면 ───────────────────────────────────────────
 function HomePage({ user, onNav, onLogout }) {
-  const cards = [
+  const mvpCards = [
     {
       id: "ai", icon: "🤖", title: "AI 지원센터",
-      desc: "상품·업무 매뉴얼, 구비서류, 세일즈톡, 공지사항을 AI가 즉시 안내",
-      color: C.primary, light: C.primaryLight,
-      tags: ["상품매뉴얼", "업무매뉴얼", "구비서류", "세일즈콘텐츠", "공지사항", "FAQ"],
+      desc: "AI 기반 상품·프로세스 안내",
+      tags: ["상품매뉴얼", "업무매뉴얼", "FAQ"],
+      gradient: "linear-gradient(135deg, #6200CC 0%, #9B00FF 100%)",
+      shadow: "rgba(98, 0, 204, 0.15)",
+      shadowHover: "rgba(98, 0, 204, 0.28)",
     },
     {
       id: "calc", icon: "📊", title: "유통망 손익 시뮬레이터",
-      desc: "대리점/판매점 손익 구조를 분석하고 시뮬레이션하는 도구",
-      color: C.teal, light: C.tealLight,
+      desc: "대리점/판매점 손익 구조 분석 및 시뮬레이션",
       tags: ["매출 분석", "손익 계산", "수수료", "목표 설정"],
+      gradient: "linear-gradient(135deg, #0E9A6F 0%, #06B6D4 100%)",
+      shadow: "rgba(14, 154, 111, 0.15)",
+      shadowHover: "rgba(14, 154, 111, 0.28)",
+    },
+  ];
+
+  const roadmapCards = [
+    {
+      id: "performance", icon: "📊", title: "실적 관리",
+      desc: "대리점별 목표 및 실적 관리",
+      color: "#0D9488", light: "#F0FDFA",
+      iconGradient: "linear-gradient(135deg, #0D9488, #06B6D4)",
+      tags: ["월별 실적", "목표 달성", "리포트"],
+    },
+    {
+      id: "area", icon: "📍", title: "Area Marketing",
+      desc: "지역 및 건물별 영업 정보 현황",
+      color: "#EA580C", light: "#FFF7ED",
+      iconGradient: "linear-gradient(135deg, #EA580C, #EC4899)",
+      tags: ["상권 동향", "소상공인", "건물 정보"],
+    },
+    {
+      id: "mart", icon: "🏪", title: "마트 운영 지원",
+      desc: "유무선 마트 정책, 매뉴얼, FAQ",
+      color: "#7C3AED", light: "#F5F3FF",
+      iconGradient: "linear-gradient(135deg, #7C3AED, #A855F7)",
+      tags: ["유무선 정책", "운영 매뉴얼", "FAQ"],
     },
   ];
 
   const historyCount = (DUMMY_HISTORY[user.id] || []).length;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans KR', sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#FFFFFF", fontFamily: "'Noto Sans KR', sans-serif" }}>
       {/* 헤더 */}
       <div style={{
         background: C.white, borderBottom: `1px solid ${C.border}`,
@@ -479,45 +507,84 @@ function HomePage({ user, onNav, onLogout }) {
 
       {/* 메인 */}
       <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 20px" }}>
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 4 }}>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: C.text, marginBottom: 2 }}>
             안녕하세요, {user.name}님 👋
           </div>
-          <div style={{ fontSize: 13, color: C.textMuted }}>오늘도 좋은 하루 되세요!</div>
+          <div style={{ fontSize: 12, color: C.textMuted }}>오늘도 좋은 하루 되세요!</div>
         </div>
 
-        {/* 카드 */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 20 }}>
-          {cards.map(card => (
-            <div key={card.id} onClick={() => onNav(card.id)}
-              style={{
-                background: C.white, borderRadius: 20, padding: 28,
-                border: `2px solid ${C.border}`, cursor: "pointer",
-                transition: "all 0.2s", boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = card.color; e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = `0 12px 32px ${card.color}22`; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"; }}>
-              <div style={{
-                width: 52, height: 52, borderRadius: 14, background: card.light,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 26, marginBottom: 16, border: `1px solid ${card.color}22`,
-              }}>{card.icon}</div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: C.text, marginBottom: 8 }}>{card.title}</div>
-              <div style={{ fontSize: 13, color: C.textSub, lineHeight: 1.7, marginBottom: 16 }}>{card.desc}</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 20 }}>
-                {card.tags.map(t => (
-                  <span key={t} style={{
-                    fontSize: 11, fontWeight: 600, background: card.light,
-                    color: card.color, borderRadius: 5, padding: "2px 8px",
-                  }}>{t}</span>
-                ))}
+        {/* ✨ MVP 출시 기능 */}
+        <div style={{ marginBottom: 48 }}>
+          <div style={{ fontSize: 24, fontWeight: 600, color: "#111827", marginBottom: 20 }}>✨ MVP 출시 기능</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+            {mvpCards.map(card => (
+              <div key={card.id} onClick={() => onNav(card.id === 'ai' ? 'ai' : 'coming-soon')}
+                style={{
+                  background: card.gradient, borderRadius: 24, padding: 32, minHeight: 280,
+                  cursor: "pointer", transition: "all 0.25s ease",
+                  boxShadow: `0 12px 40px ${card.shadow}`,
+                  display: "flex", flexDirection: "column",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = `0 24px 60px ${card.shadowHover}`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = `0 12px 40px ${card.shadow}`; }}>
+                <div style={{
+                  width: 56, height: 56, borderRadius: 16,
+                  background: "rgba(255,255,255,0.2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 28, marginBottom: 20,
+                }}>{card.icon}</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 8 }}>{card.title}</div>
+                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 1.6, marginBottom: 20 }}>{card.desc}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24 }}>
+                  {card.tags.map(t => (
+                    <span key={t} style={{
+                      fontSize: 11, fontWeight: 600,
+                      background: "rgba(255,255,255,0.18)", color: "rgba(255,255,255,0.95)",
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      borderRadius: 6, padding: "3px 10px",
+                    }}>{t}</span>
+                  ))}
+                </div>
+                <div style={{ marginTop: "auto" }}>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    background: "rgba(255,255,255,0.2)", color: "#fff",
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    borderRadius: 12, padding: "10px 20px", fontSize: 14, fontWeight: 600,
+                  }}>바로가기 →</span>
+                </div>
               </div>
-              <div style={{
-                background: card.color, color: "#fff", borderRadius: 10,
-                padding: "10px", fontSize: 13, fontWeight: 700, textAlign: "center",
-              }}>바로가기 →</div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* 🚀 로드맵 (개발 예정) */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 24, fontWeight: 600, color: "#9CA3AF", marginBottom: 20 }}>🚀 로드맵 (개발 예정)</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+            {roadmapCards.map(card => (
+              <div key={card.id} onClick={() => onNav('coming-soon')}
+                style={{
+                  background: "#fff", borderRadius: 16, padding: 20, minHeight: 160,
+                  border: "1px solid #E5E7EB", cursor: "pointer",
+                  transition: "all 0.2s ease", boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                  opacity: 0.9, display: "flex", flexDirection: "column",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 8px 24px ${card.color}22`; e.currentTarget.style.borderColor = `${card.color}55`; e.currentTarget.style.opacity = "1"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = "#E5E7EB"; e.currentTarget.style.opacity = "0.9"; }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 10, background: card.iconGradient,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0,
+                  }}>{card.icon}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#374151" }}>{card.title}</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#9CA3AF", lineHeight: 1.6 }}>{card.desc}</div>
+                <div style={{ marginTop: "auto", paddingTop: 12, textAlign: "right", fontSize: 13, color: "#D1D5DB" }}>→</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 공지 배너 */}
@@ -805,6 +872,21 @@ function AICenterPage({ user, onBack }) {
   );
 }
 
+// ── 구현 중 페이지 ──────────────────────────────────────
+function ComingSoonPage({ onBack }) {
+  return (
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Noto Sans KR', sans-serif" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: "#1A1F36", marginBottom: 20 }}>현재 해당 기능은 구현 중에 있습니다.</div>
+        <button onClick={onBack} style={{
+          background: C.teal, border: "none", borderRadius: 10, padding: "10px 20px",
+          fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: "inherit",
+        }}>← 홈으로</button>
+      </div>
+    </div>
+  );
+}
+
 // ── 메인 앱 ────────────────────────────────────────────
 export default function App() {
   const [page, setPage] = useState("login");
@@ -829,17 +911,7 @@ export default function App() {
       {page === "home" && user && <HomePage user={user} onNav={setPage} onLogout={handleLogout} />}
       {page === "ai" && user && <AICenterPage user={user} onBack={() => setPage("home")} />}
       {page === "history" && user && <HistoryPage user={user} onBack={() => setPage("home")} />}
-      {page === "calc" && user && (
-        <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Noto Sans KR', sans-serif" }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#1A1F36", marginBottom: 20 }}>현재 해당 기능은 구현 중에 있습니다.</div>
-            <button onClick={() => setPage("home")} style={{
-              background: C.teal, border: "none", borderRadius: 10, padding: "10px 20px",
-              fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: "inherit",
-            }}>← 홈으로</button>
-          </div>
-        </div>
-      )}
+      {page === "coming-soon" && user && <ComingSoonPage onBack={() => setPage("home")} />}
     </>
   );
 }
