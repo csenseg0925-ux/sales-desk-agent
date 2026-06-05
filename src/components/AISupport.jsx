@@ -23,6 +23,21 @@ const PLACEHOLDER = {
   'FAQ': '고객 응대 관련 질문을 해보세요.',
 }
 
+function parseAiResponse(text) {
+  const separatorPattern = /\n---\n|\n---$/
+  const parts = text.split(separatorPattern)
+  if (parts.length < 2) return { mainText: text, suggestedQuestions: [] }
+
+  const mainText = parts[0].trim()
+  const footer = parts.slice(1).join('\n')
+  const questions = []
+  for (const line of footer.split('\n')) {
+    const match = line.match(/^\s*\d+\.\s+(.+)$/)
+    if (match) questions.push(match[1].trim())
+  }
+  return { mainText, suggestedQuestions: questions }
+}
+
 async function callClaudeApi(category, message, history) {
   const contextChunks = getContextChunks(message)
 
@@ -38,7 +53,13 @@ async function callClaudeApi(category, message, history) {
     `2. 참고 문서에 없는 내용은 추론하거나 일반적인 업무 지식으로 답변하지 마세요.\n` +
     `3. 참고 문서에서 찾을 수 없는 질문에는 "해당 내용은 현재 등록된 문서에서 확인되지 않습니다."라고 안내하세요.\n` +
     `4. 답변 시 근거가 된 출처(문서명 > 항목)를 함께 표기하세요.\n` +
-    `5. 답변은 항상 한국어로 하세요.`
+    `5. 답변은 항상 한국어로 하세요.\n` +
+    `6. 답변 마지막에 반드시 아래 형식으로 추천 질문 3개를 추가하세요:\n\n` +
+    `---\n` +
+    `💡 이런 것도 궁금하신가요?\n` +
+    `1. [현재 질문과 연관된 추천 질문]\n` +
+    `2. [현재 질문과 연관된 추천 질문]\n` +
+    `3. [현재 질문과 연관된 추천 질문]`
 
   const messages = [
     ...history.map(({ role, content }) => ({ role, content })),
@@ -223,6 +244,39 @@ const s = {
     flexShrink: 0,
     transition: 'background 0.15s',
   }),
+  suggestionsWrapper: {
+    marginTop: '12px',
+    padding: '12px 14px',
+    background: '#FAFAFA',
+    borderRadius: '12px',
+    border: '1px solid #F0F0F0',
+  },
+  suggestionsHeader: {
+    fontSize: '13px',
+    color: '#6B7280',
+    marginBottom: '10px',
+    fontWeight: '500',
+  },
+  suggestionsGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  suggestionCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#ffffff',
+    border: '1px solid #E5E7EB',
+    borderRadius: '12px',
+    padding: '10px 14px',
+    fontSize: '13px',
+    color: '#374151',
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'all 0.15s ease',
+    lineHeight: 1.4,
+  },
 }
 
 function formatTime() {
@@ -252,8 +306,15 @@ export default function AISupport() {
 
   const sendMessage = async () => {
     if (!canSend) return
+    await sendMessageWithText(input.trim())
+  }
 
-    const text = input.trim()
+  const handleSuggestedQuestion = (question) => {
+    if (loading) return
+    sendMessageWithText(question)
+  }
+
+  const sendMessageWithText = async (text) => {
     const userMsg = { role: 'user', content: text, time: formatTime() }
     const prevMessages = histories[activeCategory] || []
     const updatedMessages = [...prevMessages, userMsg]
@@ -264,7 +325,13 @@ export default function AISupport() {
 
     try {
       const replyText = await callClaudeApi(activeCategory, text, prevMessages)
-      const aiMsg = { role: 'assistant', content: replyText, time: formatTime() }
+      const { mainText, suggestedQuestions } = parseAiResponse(replyText)
+      const aiMsg = {
+        role: 'assistant',
+        content: mainText,
+        suggestedQuestions,
+        time: formatTime(),
+      }
       setHistories((h) => ({ ...h, [activeCategory]: [...updatedMessages, aiMsg] }))
     } catch (err) {
       const errMsg = {
@@ -299,6 +366,16 @@ export default function AISupport() {
         .dot3 { animation: bounce 1.4s infinite ease-in-out 0.4s; }
         .chat-input:focus { border-color: #1B4FD8 !important; background: #fff !important; }
         .tab-btn:hover { color: #1B4FD8 !important; }
+        .suggestion-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+          border-color: #1B4FD8 !important;
+          color: #1B4FD8 !important;
+        }
+        @media (min-width: 600px) {
+          .suggestions-grid { flex-direction: row !important; }
+          .suggestions-grid .suggestion-card { flex: 1; }
+        }
       `}</style>
 
       <header style={s.header}>
@@ -332,13 +409,33 @@ export default function AISupport() {
           messages.map((msg, idx) => (
             <div key={idx} style={s.messageRow(msg.role === 'user')}>
               {msg.role === 'assistant' && <div style={s.avatar}>🤖</div>}
-              <div>
+              <div style={{ maxWidth: '70%' }}>
                 <div style={{
                   ...s.bubble(msg.role === 'user'),
+                  maxWidth: '100%',
                   ...(msg.isError ? { background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA' } : {}),
                 }}>
                   {msg.content}
                 </div>
+                {msg.role === 'assistant' && msg.suggestedQuestions?.length > 0 && (
+                  <div style={s.suggestionsWrapper}>
+                    <div style={s.suggestionsHeader}>💡 이런 것도 궁금하신가요?</div>
+                    <div className="suggestions-grid" style={s.suggestionsGrid}>
+                      {msg.suggestedQuestions.map((q, qIdx) => (
+                        <button
+                          key={qIdx}
+                          className="suggestion-card"
+                          style={s.suggestionCard}
+                          onClick={() => handleSuggestedQuestion(q)}
+                          disabled={loading}
+                        >
+                          <span style={{ fontSize: '14px', flexShrink: 0 }}>💬</span>
+                          <span>{q}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div style={{ ...s.timestamp, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
                   {msg.time}
                 </div>

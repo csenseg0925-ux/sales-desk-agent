@@ -704,7 +704,38 @@ Q. WiFi 없는 VAS 출시? A. 당사 VAS통합상품은 WiFi 기본제공 구조
 명의변경: 신구 명의자 신분증, 위임장+인감증명서(위임시)
 번호이동: 기존통신사 확인번호, 신분증
 
-항상 실무에 바로 쓸 수 있는 명확한 답변을 제공하고 한국어로 답변하세요.`;
+항상 실무에 바로 쓸 수 있는 명확한 답변을 제공하고 한국어로 답변하세요.
+
+【답변 형식 — 반드시 준수】
+모든 답변은 다음 형식으로 작성하세요:
+
+[메인 답변 내용]
+
+---
+💡 이런 것도 궁금하신가요?
+1. [관련 추천 질문 1]
+2. [관련 추천 질문 2]
+3. [관련 추천 질문 3]
+
+추천 질문 작성 규칙:
+- 사용자 질문과 관련된 자연스러운 후속 질문
+- 답변 내용에서 자연스럽게 이어지는 질문
+- 영업 담당자가 실제 궁금해할 만한 내용
+- 짧고 명확하게 (15자 이내)
+- 반드시 "---" 구분자 아래에 번호 목록 형식으로 작성`;
+
+function parseAiResponse(text) {
+  const parts = text.split(/\n---\n|\n---$/)
+  if (parts.length < 2) return { mainText: text, suggestedQuestions: [] }
+  const mainText = parts[0].trim()
+  const footer = parts.slice(1).join("\n")
+  const questions = []
+  for (const line of footer.split("\n")) {
+    const match = line.match(/^\s*\d+\.\s+(.+)$/)
+    if (match) questions.push(match[1].trim())
+  }
+  return { mainText, suggestedQuestions: questions }
+}
 
 function TypingDots() {
   return (
@@ -750,14 +781,15 @@ function AICenterPage({ user, onBack }) {
         },
         body: JSON.stringify({
           model: "claude-sonnet-4-5",
-          max_tokens: 1000,
+          max_tokens: 1500,
           system: SYSTEM_PROMPT,
           messages: updated,
         }),
       });
       const data = await res.json();
-      const reply = data.content?.map(c => c.text || "").join("\n") || "응답 오류";
-      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+      const raw = data.content?.map(c => c.text || "").join("\n") || "응답 오류";
+      const { mainText, suggestedQuestions } = parseAiResponse(raw);
+      setMessages(prev => [...prev, { role: "assistant", content: mainText, suggestedQuestions }]);
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "⚠️ 네트워크 오류가 발생했습니다." }]);
     } finally { setLoading(false); }
@@ -802,19 +834,52 @@ function AICenterPage({ user, onBack }) {
       </div>
 
       <div style={{ flex: 1, maxWidth: 900, width: "100%", margin: "0 auto", padding: "16px 16px 0", overflowY: "auto" }}>
+        <style>{`
+          .sq-card:hover {
+            border-color: ${C.primary} !important;
+            color: ${C.primary} !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37,99,235,0.12) !important;
+          }
+          @media (min-width: 600px) {
+            .sq-grid { flex-direction: row !important; }
+            .sq-grid .sq-card { flex: 1; }
+          }
+        `}</style>
         {messages.map((m, i) => {
           const isUser = m.role === "user";
           return (
             <div key={i} style={{ display: "flex", flexDirection: isUser ? "row-reverse" : "row", alignItems: "flex-end", gap: 8, marginBottom: 14 }}>
               {!isUser && <div style={{ width: 30, height: 30, borderRadius: 9, background: `linear-gradient(135deg, ${C.primary}, ${C.purple})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>🤖</div>}
-              <div style={{
-                maxWidth: "72%", background: isUser ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : C.white,
-                border: isUser ? "none" : `1px solid ${C.border}`,
-                borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                padding: "10px 14px", color: isUser ? "#fff" : C.text,
-                fontSize: 13.5, lineHeight: 1.75, whiteSpace: "pre-wrap",
-                boxShadow: isUser ? `0 4px 14px ${C.primary}44` : "0 2px 8px rgba(0,0,0,0.05)",
-              }}>{m.content}</div>
+              <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{
+                  background: isUser ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : C.white,
+                  border: isUser ? "none" : `1px solid ${C.border}`,
+                  borderRadius: isUser ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                  padding: "10px 14px", color: isUser ? "#fff" : C.text,
+                  fontSize: 13.5, lineHeight: 1.75, whiteSpace: "pre-wrap",
+                  boxShadow: isUser ? `0 4px 14px ${C.primary}44` : "0 2px 8px rgba(0,0,0,0.05)",
+                }}>{m.content}</div>
+                {!isUser && m.suggestedQuestions?.length > 0 && (
+                  <div style={{ background: "#FAFBFF", border: `1px solid ${C.border}`, borderRadius: 12, padding: "10px 12px" }}>
+                    <div style={{ fontSize: 12, color: C.textMuted, fontWeight: 600, marginBottom: 8 }}>💡 이런 것도 궁금하신가요?</div>
+                    <div className="sq-grid" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {m.suggestedQuestions.map((q, qi) => (
+                        <button key={qi} className="sq-card" onClick={() => send(q)} disabled={loading} style={{
+                          display: "flex", alignItems: "center", gap: 7,
+                          background: C.white, border: `1px solid ${C.border}`, borderRadius: 10,
+                          padding: "8px 12px", fontSize: 12.5, color: C.textSub,
+                          cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+                          transition: "all 0.15s", lineHeight: 1.4,
+                        }}>
+                          <span style={{ flexShrink: 0 }}>💬</span>
+                          <span>{q}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
