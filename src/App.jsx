@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import ANTHROPIC_API_KEY from './config';
+import { DIFY_API_KEY, DIFY_ENDPOINT } from './config';
 
 // ── 색상 시스템 ────────────────────────────────────────
 const C = {
@@ -660,69 +660,7 @@ const QUICK = {
   ],
 };
 
-const SYSTEM_PROMPT = `당신은 SKB/SKT 유선 상품 전문 Sales Desk AI Agent입니다. 대리점/판매점 직원이 유선 상품 청약, 업무 지침, 프로세스에 대해 쉽고 빠르게 답을 얻을 수 있도록 돕습니다.
-
-【VAS통합상품 핵심 정보】
-- 가입중단일: 2026년 3월 19일(목) 이후 신규 청약 및 변경 불가
-- 중단배경: 안심패키지 출시 이후 VAS통합상품 가입 미미, 혼동 방지
-- 중단상품: 모두안심/원격케어/파워백신 계열 인터넷 상품 (SKB/SKT 각 20개, 총 40개)
-- 기존 가입자: 서비스 그대로 이용 가능 (영향 없음)
-- 가입중단 이후: SKB/SKT 상담관리자 이상 청약 가능 (2025.03.26~)
-- 연관상품: 안심패키지 4종 (안심/더안심/안심쉐어/더안심쉐어)
-
-【VAS통합상품 요금 (VAT포함)】
-광랜인터넷: 무약정 49,500원 / 1년 42,350원 / 2년 37,400원 / 3년 24,750원
-기가라이트인터넷: 무약정 62,700원 / 1년 54,450원 / 2년 46,200원 / 3년 35,750원
-기가인터넷: 무약정 68,200원 / 1년 59,950원 / 2년 51,700원 / 3년 41,250원
-
-【모두안심 인터넷 기능】
-① 악성코드 차단: 당사 원천기술, 타사 대비 2배 DB
-② 유해사이트 차단: On/Off 고객 선택
-③ PC이용관리
-④ Daily Security Report 제공 (타사 미제공)
-
-【VAS FAQ】
-Q. 기존 가입자 서비스 이용 가능? A. 네, 기존 가입자는 그대로 이용 가능합니다.
-Q. 기가와이파이7 VAS 신청 가능? A. 불가. 기가와이파이7 통합상품에 안심패키지 4종 조합 안내.
-Q. WiFi 없는 VAS 출시? A. 당사 VAS통합상품은 WiFi 기본제공 구조로 출시됩니다.
-
-【인터넷 신규청약 절차】
-1단계: 고객 상담 및 상품 안내
-2단계: 고객 동의 획득 (필수/선택 동의)
-3단계: BizPortal → 유선청약 → 인터넷신규
-4단계: 고객정보 입력
-5단계: 주소 검색 및 커버리지 확인
-6단계: 상품 선택 및 약정 설정
-7단계: 요금 안내 및 자동이체 등록
-8단계: 전자서명 또는 서면 서명
-9단계: 청약 완료 및 접수번호 확인
-10단계: 개통 예정일 안내 (2~5 영업일)
-
-【구비서류】
-개인신규: 신분증 (주민등록증/운전면허증/여권)
-법인신규: 사업자등록증, 법인인감증명서, 법인인감도장
-명의변경: 신구 명의자 신분증, 위임장+인감증명서(위임시)
-번호이동: 기존통신사 확인번호, 신분증
-
-항상 실무에 바로 쓸 수 있는 명확한 답변을 제공하고 한국어로 답변하세요.
-
-【답변 형식 — 반드시 준수】
-모든 답변은 다음 형식으로 작성하세요:
-
-[메인 답변 내용]
-
----
-💡 이런 것도 궁금하신가요?
-1. [관련 추천 질문 1]
-2. [관련 추천 질문 2]
-3. [관련 추천 질문 3]
-
-추천 질문 작성 규칙:
-- 사용자 질문과 관련된 자연스러운 후속 질문
-- 답변 내용에서 자연스럽게 이어지는 질문
-- 영업 담당자가 실제 궁금해할 만한 내용
-- 짧고 명확하게 (15자 이내)
-- 반드시 "---" 구분자 아래에 번호 목록 형식으로 작성`;
+// SYSTEM_PROMPT 제거됨 — 프롬프트/지식은 Dify 내부에서 처리
 
 function parseAiResponse(text) {
   const parts = text.split(/\n---\n|\n---$/)
@@ -771,23 +709,22 @@ function AICenterPage({ user, onBack }) {
     setMessages(updated);
     setLoading(true);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch(`${DIFY_ENDPOINT}/chat-messages`, {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${DIFY_API_KEY}`,
           "Content-Type": "application/json",
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-5",
-          max_tokens: 1500,
-          system: SYSTEM_PROMPT,
-          messages: updated,
+          inputs: {},
+          query: q,
+          user: user.id,
+          response_mode: "blocking",
+          conversation_id: "",
         }),
       });
       const data = await res.json();
-      const raw = data.content?.map(c => c.text || "").join("\n") || "응답 오류";
+      const raw = data.answer || "응답 오류";
       const { mainText, suggestedQuestions } = parseAiResponse(raw);
       setMessages(prev => [...prev, { role: "assistant", content: mainText, suggestedQuestions }]);
     } catch {
